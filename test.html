@@ -1,0 +1,24 @@
+<html>
+    <head>
+        <script src="http://localhost:8080/socket.io/socket.io.js"></script>
+    </head>
+    <body>
+        <script>
+            var socket = io.connect('http://localhost:8080');
+            var gameSettings = {
+                numberOfRounds: 10,
+                randomCountry: false,
+                isSingleplayer: true,
+                countryCode: 'BD'
+            };
+            socket.emit('loadLocations', gameSettings);
+            socket.on('startSingleplayerGame', (locations) => {
+                console.log(locations.length);
+                console.log(locations);
+            });
+            socket.on('locationLoaded', (location) => {
+                 console.log(location.lat + ' ' + location.lng);
+            });
+        </script>
+    </body>
+</html>

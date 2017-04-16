@@ -1,0 +1,11 @@
+{
+  "name": "PlaceYourGuessServer",
+  "description": "example chat application with socket.io",
+  "version": "0.0.1",
+  "dependencies": {
+    "express": "",
+    "request": "^2.81.0",
+    "request-promise": "^4.2.0",
+    "socket.io": ""
+  }
+}
