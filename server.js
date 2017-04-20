@@ -16,18 +16,15 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
+//LBN: '192.168.4.1'
 //load countries' bounding boxes and codes at server start
-server.listen(8080, '192.168.4.1', () => {
-    let host = server.address().address;
-    let port = server.address().port;
-    console.log('App listening at http://%s:%s', host, port);
-
-    fs.readFile('./boxes.json', (err, data) => {
+server.listen(8080, () => {
+    fs.readFile('./countries/boxes.json', (err, data) => {
         if (err) throw err;
         boxes = JSON.parse(data);
     });
 
-    fs.readFile('./codes.json', (err, data) => {
+    fs.readFile('./countries/codes.json', (err, data) => {
         if (err) throw err;
         codes = JSON.parse(data);
     });
@@ -57,7 +54,9 @@ io.sockets.on('connection', (client) => {
             rooms[roomIndex].players.push(player); //add new player
             for (let i = 0; i < rooms[roomIndex].players.length; i++) {
                 let clientRef = rooms[roomIndex].players[i].clientRef;
-                clientRef.emit('playerJoined', new LINQ(rooms[roomIndex].players).Select((player) => {return player.nickname;}).ToArray()); //update player lists for all players
+                clientRef.emit('playerJoined', new LINQ(rooms[roomIndex].players).Select((player) => {
+                    return player.nickname;
+                }).ToArray()); //update player lists for all players
             }
         } else {
             let room = { //add new room
@@ -121,9 +120,10 @@ io.sockets.on('connection', (client) => {
 
         if (!isSingleplayer) {
             gameSettings.timerLimit = settings.timerLimit; //to pass timerLimit to all players besides host
+            gameSettings.hintsEnabled = settings.hintsEnabled; //to pass hintsEnabled...
             let hostIndex = findInArray(roomHosts, 'clientRef', client);
             let room = rooms[hostIndex];
-            for (let i = 0; i < room.players.length; i++) { //push the rest of the players to clients array for emitting startMultiplayerGame event
+            for (let i = 1; i < room.players.length; i++) { //push the rest of the players to clients array for emitting startMultiplayerGame event
                 clients.push(room.players[i].clientRef);
             }
         }
@@ -134,6 +134,40 @@ io.sockets.on('connection', (client) => {
         } else {
             gameSettings.countryCode = settings.countryCode;
             locationGenerator.getLocations(clients, countriesInfo, gameSettings);
+        }
+    });
+
+    client.on('sendScore', (scoreInfo) => {
+        let roomIndex = findInArray(rooms, 'name', scoreInfo.roomName);
+        let room = rooms[roomIndex];
+        let players = room.players;
+        let playerIndex = findInArray(players, 'nickname', scoreInfo.nickname);
+        let player = players[playerIndex];
+        player.score = scoreInfo.score;
+
+        let gameOver = (() => { //check if all players have score added
+            for (let i = 0; i < players.length; i++) {
+                if (!players[i].hasOwnProperty('score')) {
+                    return false;
+                }
+            }
+            return true;
+        })();
+
+        if (gameOver) {
+            let playerScores = new LINQ(players).Select((player) => {
+                return {
+                    nickname: player.nickname,
+                    score: player.score
+                };
+            }).ToArray();
+            
+            for (let i = 0; i < players.length; i++) {
+                players[i].clientRef.emit('showScores', playerScores); //send all individual scores to all players
+                console.log(players[i].nickname);
+                delete players[i].score; //delete score property from every player object
+            }
+            console.log('showScores emitted');
         }
     });
 });

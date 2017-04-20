@@ -180,7 +180,8 @@ module.exports = {
             for (let i = 0; i < clients.length; i++) {
                 clients[i].emit('startMultiplayerGame', {
                     locations: locations,
-                    timerLimit: gameSettings.timerLimit //probably hintsEnabled will go here as well in the future
+                    timerLimit: gameSettings.timerLimit,
+                    hintsEnabled: gameSettings.hintsEnabled
                 });
             }
         }
