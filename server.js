@@ -65,7 +65,9 @@ io.sockets.on('connection', (client) => {
             };
             rooms.push(room); //add new room
             roomHosts.push(player); //add host to hosts array
-            client.emit('joinedRoom', new LINQ(room.players).Select((player) => {return player.nickname;}).ToArray());
+            client.emit('joinedRoom', new LINQ(room.players).Select((player) => {
+                return player.nickname;
+            }).ToArray());
             client.emit('nominateHost');
         }
 
@@ -83,7 +85,9 @@ io.sockets.on('connection', (client) => {
             } else {
                 for (let i = 0; i < rooms[roomIndex].players.length; i++) { //info for other players in room that someone left
                     let clientRef = rooms[roomIndex].players[i].clientRef;
-                    clientRef.emit('playerLeft', new LINQ(rooms[roomIndex].players).Select((player) => {return player.nickname;}).ToArray());
+                    clientRef.emit('playerLeft', new LINQ(rooms[roomIndex].players).Select((player) => {
+                        return player.nickname;
+                    }).ToArray());
                 }
                 
                 if (playerIndex == 0) { //if player who joined first (host) leaves - nominate new host
@@ -133,6 +137,12 @@ io.sockets.on('connection', (client) => {
             locationGenerator.getLocations(clients, countriesInfo, gameSettings);
         } else {
             gameSettings.countryCode = settings.countryCode;
+            if (settings.countryCode == 'custom') { //pass bounds for custom location
+                gameSettings.minLat = settings.minLat;
+                gameSettings.maxLat = settings.maxLat;
+                gameSettings.minLng = settings.minLng;
+                gameSettings.maxLng = settings.maxLng;
+            }
             locationGenerator.getLocations(clients, countriesInfo, gameSettings);
         }
     });

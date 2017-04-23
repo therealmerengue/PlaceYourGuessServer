@@ -148,7 +148,11 @@ async function getLocation(bounds, codes) {
         let requestOptions = getRequestOptions(latLng, 10000);
         json = await makeRequest(requestOptions);
         if (Object.keys(json).length != 0) {
-            locationWithinCountry = (getCountryCode(codes, json.Location.country) == bounds.countryCode);
+            if (bounds.countryCode != 'custom') {
+                locationWithinCountry = (getCountryCode(codes, json.Location.country) == bounds.countryCode);
+            } else {
+                locationWithinCountry = true;
+            }
         }
     }
     return extractLocation(json);
@@ -162,6 +166,19 @@ module.exports = {
             for (let i = 0; i < gameSettings.numberOfLocations; i++) {
                 let randomCode = getRandomCountryCode();
                 let bounds = getBounds(countriesInfo.boxes, randomCode);
+                boundsArray.push(bounds);
+            }
+        } else if (gameSettings.countryCode == 'custom') {
+            //pull bounds from gameSettings
+            //in that case getLocation does not have to check if found location is within given country
+            let bounds = {
+                minLat: gameSettings.minLat,
+                maxLat: gameSettings.maxLat,
+                minLng: gameSettings.minLng,
+                maxLng: gameSettings.maxLng,
+                countryCode: 'custom'
+            }
+            for (let i = 0; i < gameSettings.numberOfLocations; i++) {
                 boundsArray.push(bounds);
             }
         } else {
