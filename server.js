@@ -42,36 +42,89 @@ var printRooms = () => {
     }
 };
 
+var emitRoomList = (client) => {
+    client.emit('roomList', new LINQ(rooms).Select((room) => { //send room list back to client
+        return {
+            name: room.name,
+            numberOfPlayers: room.players.length
+        };
+    }).ToArray());
+};
+
+var emitReloadList = (room, event) => {
+    for (let i = 0; i < room.players.length; i++) {
+        let clientRef = room.players[i].clientRef;
+        clientRef.emit(event, new LINQ(room.players).Select((player) => {
+            return player.nickname;
+        }).ToArray()); //update player lists for all players
+    }
+}
+
 io.sockets.on('connection', (client) => {
     console.log('connected');
-    client.on('joinRoom', (joinInfo) => {
-        let roomIndex = findInArray(rooms, 'name', joinInfo.room);
-        let player = {
-            nickname: joinInfo.nickname,
-            clientRef: client
-        };
-        if (roomIndex > -1) { //room exists
-            rooms[roomIndex].players.push(player); //add new player
-            for (let i = 0; i < rooms[roomIndex].players.length; i++) {
-                let clientRef = rooms[roomIndex].players[i].clientRef;
-                clientRef.emit('playerJoined', new LINQ(rooms[roomIndex].players).Select((player) => {
-                    return player.nickname;
-                }).ToArray()); //update player lists for all players
-            }
+
+    emitRoomList(client);
+
+    client.on('reloadRoomList', () => {
+        emitRoomList(client);
+    });
+
+    client.on('requestPlayerList', (roomName) => {
+        let roomIndex = findInArray(rooms, 'name', roomName);
+        if (roomIndex === -1) {
+            console.log('requestPlayerList - invalid room name');
         } else {
+            emitReloadList(rooms[roomIndex], 'playerJoined');
+        }
+    });
+
+    client.on('createRoom', (newRoomInfo) => {
+        let newRoomName = newRoomInfo.roomName;
+        let hostName = newRoomInfo.hostName;
+
+        if (findInArray(rooms, 'name', newRoomName) != -1) {
+            client.emit('roomAlreadyExists');
+        } else {
+            let player = {
+                nickname: hostName,
+                clientRef: client
+            };
             let room = { //add new room
-                name: joinInfo.room,
+                name: newRoomName,
                 players: [player]
             };
             rooms.push(room); //add new room
             roomHosts.push(player); //add host to hosts array
-            client.emit('joinedRoom', new LINQ(room.players).Select((player) => {
-                return player.nickname;
-            }).ToArray());
-            client.emit('nominateHost');
-        }
 
-        printRooms();
+            client.emit('roomCreated');
+            printRooms();
+        }
+    });
+
+    client.on('joinExistingRoom', (joinRoomInfo) => {
+        let roomName = joinRoomInfo.roomName;
+        let playerName = joinRoomInfo.playerName;
+
+        let roomIndex = findInArray(rooms, 'name', roomName);
+        if (roomIndex == -1) {
+            console.log('Room ' + roomName + ' does not exist.');
+            client.emit('roomNotExists');
+        } else {
+            let player = {
+                nickname: playerName,
+                clientRef: client
+            }
+
+            let players = rooms[roomIndex].players;
+            if (findInArray(players, 'nickname', player.nickname) == -1) { //if no player with the same name - join
+                rooms[roomIndex].players.push(player);
+                emitReloadList(rooms[roomIndex], 'playerJoined');
+            } else {
+                client.emit('nicknameAlreadyTaken');
+            }
+
+            printRooms();
+        }
     });
 
     client.on('leaveRoom', (leaveInfo) => {
