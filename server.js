@@ -16,9 +16,11 @@ app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
 });
 
-//LBN: '192.168.4.1'
+app.set('port', (process.env.PORT || 5000));
+
+//LBN: '192.168.4.1', 8080
 //load countries' bounding boxes and codes at server start
-server.listen(8080, () => {
+server.listen(app.get('port'), () => {
     fs.readFile('./countries/boxes.json', (err, data) => {
         if (err) throw err;
         boxes = JSON.parse(data);
