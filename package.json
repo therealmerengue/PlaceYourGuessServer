@@ -1,11 +1,30 @@
 {
   "name": "PlaceYourGuessServer",
-  "description": "example chat application with socket.io",
+  "description": "PlaceYourGuessServer game server",
   "version": "0.0.1",
+  "engines": {
+    "node": "7.8.0"
+  },
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "",
+    "fs": "0.0.1-security",
+    "node-linq": "0.0.5",
     "request": "^2.81.0",
     "request-promise": "^4.2.0",
     "socket.io": ""
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/therealmerengue/PlaceYourGuessServer.git"
+  },
+  "keywords": [
+    "node",
+    "heroku",
+    "express"
+  ],
+  "license": "MIT"
 }

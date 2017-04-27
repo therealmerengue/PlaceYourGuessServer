@@ -65,6 +65,22 @@ io.sockets.on('connection', (client) => {
 
     emitRoomList(client);
 
+    client.on('disconnect', () => {
+        for (let i = 0; i < rooms.length; i++) {
+            let clientIndex = findInArray(rooms[i].players, 'clientRef', client);
+            if (clientIndex != -1) {
+                rooms[i].players.splice(clientIndex, 1);
+                if (rooms[i].players.length === 0) {
+                    rooms.splice(i, 1);
+                    roomHosts.splice(i, 1);
+                }
+
+                printRooms();
+                break;
+            }
+        }
+    });
+
     client.on('reloadRoomList', () => {
         emitRoomList(client);
     });
