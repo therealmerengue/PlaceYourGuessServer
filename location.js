@@ -140,7 +140,7 @@ var getCountryCode = (codes, countryName) => {
     }
 }
 
-async function getLocation(bounds, codes) {
+async function getLocation(bounds, codes, chosenLatitudes) {
     let json = {};
     let locationWithinCountry = false;
     while (Object.keys(json).length == 0 || !locationWithinCountry) {
@@ -152,6 +152,13 @@ async function getLocation(bounds, codes) {
                 locationWithinCountry = (getCountryCode(codes, json.Location.country) == bounds.countryCode);
             } else {
                 locationWithinCountry = true;
+            }
+
+            if (chosenLatitudes.indexOf(json.Location.lat) != -1) {
+                json = {};
+                continue;
+            } else {
+                chosenLatitudes.push(json.Location.lat);
             }
         }
     }
@@ -187,8 +194,9 @@ module.exports = {
                 boundsArray.push(bounds);
             }
         }
-
-        let promises = boundsArray.map((bounds) => getLocation(bounds, countriesInfo.codes));
+        
+        let chosenLatitudes = [];
+        let promises = boundsArray.map((bounds) => getLocation(bounds, countriesInfo.codes, chosenLatitudes));
         let locations = await Promise.all(promises);
 
         if (clients.length == 1) {
