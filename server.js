@@ -10,7 +10,8 @@ var express = require('express'),
     rooms = [],
     roomHosts = [],
     boxes = {}, 
-    codes = {};
+    codes = {},
+    cities = {};
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
@@ -21,14 +22,19 @@ app.set('port', (process.env.PORT || 5000));
 //LBN: '192.168.4.1', 8080
 //load countries' bounding boxes and codes at server start
 server.listen(app.get('port'), () => {
-    fs.readFile('./countries/boxes.json', (err, data) => {
+    fs.readFile('./locations/boxes.json', (err, data) => {
         if (err) throw err;
         boxes = JSON.parse(data);
     });
 
-    fs.readFile('./countries/codes.json', (err, data) => {
+    fs.readFile('./locations/codes.json', (err, data) => {
         if (err) throw err;
         codes = JSON.parse(data);
+    });
+
+     fs.readFile('./locations/cities.json', (err, data) => {
+        if (err) throw err;
+        cities = JSON.parse(data);
     });
 });
 
@@ -216,6 +222,28 @@ io.sockets.on('connection', (client) => {
             }
             locationGenerator.getLocations(clients, countriesInfo, gameSettings);
         }
+    });
+
+    client.on('loadCityLocations', (settings) => {
+        let numOfLocations = settings.numberOfRounds;
+        let isSingleplayer = settings.isSingleplayer;
+        let clients = [client];
+        
+        let gameSettings = {
+            numberOfLocations: numOfLocations
+        };
+
+        if (!isSingleplayer) {
+            gameSettings.timerLimit = settings.timerLimit; //to pass timerLimit to all players besides host
+            gameSettings.hintsEnabled = settings.hintsEnabled; //to pass hintsEnabled...
+            let hostIndex = findInArray(roomHosts, 'clientRef', client);
+            let room = rooms[hostIndex];
+            for (let i = 1; i < room.players.length; i++) { //push the rest of the players to clients array for emitting startMultiplayerGame event
+                clients.push(room.players[i].clientRef);
+            }
+        }
+
+        locationGenerator.getCityLocations(clients, cities, gameSettings);
     });
 
     client.on('sendScore', (scoreInfo) => {

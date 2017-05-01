@@ -202,5 +202,37 @@ module.exports = {
                 });
             }
         }
+    }, 
+    
+    getCityLocations: (clients, cities, gameSettings) => {
+        let numberOfLocations = gameSettings.numberOfLocations;
+        let locations = [];
+        let alreadySelectedCityIndexes = [];
+
+        for (let i = 0; i < numberOfLocations; i++) {
+            let cityIndex = Math.floor(Math.random() * cities.length);
+            while (locations.indexOf(cityIndex) != -1) {
+                cityIndex = Math.floor(Math.random() * cities.length);
+            }
+
+            let city = cities[cityIndex];
+            alreadySelectedCityIndexes.push(cityIndex);
+            locations.push({
+                lat: city[0],
+                lng: city[1]
+            });
+        }
+
+        if (clients.length == 1) {
+            clients[0].emit('startSingleplayerGame', locations);
+        } else {
+            for (let i = 0; i < clients.length; i++) {
+                clients[i].emit('startMultiplayerGame', {
+                    locations: locations,
+                    timerLimit: gameSettings.timerLimit,
+                    hintsEnabled: gameSettings.hintsEnabled
+                });
+            }
+        }
     }
 };
