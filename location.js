@@ -106,6 +106,29 @@ var getRandomLatLng = (bounds) => {
     };
 };
 
+var getRadius = (bounds) => {
+    let calculateDistance = (lat1, lon1, lat2, lon2) => {
+        let radlat1 = Math.PI * lat1 / 180;
+        let radlat2 = Math.PI * lat2 / 180;
+        let theta = lon1 - lon2;
+        let radtheta = Math.PI * theta / 180;
+        let dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+        dist = Math.acos(dist);
+        dist = dist * 180 / Math.PI;
+        dist = dist * 60 * 1.1515 * 1.609344;
+        return dist;
+    };
+
+    let distanceAcrossBounds = calculateDistance(bounds.minLat, bounds.minLng, bounds.maxLat, bounds.maxLng);
+
+    if (distanceAcrossBounds > 1000) //km
+        return 10000; //m
+    else if (distanceAcrossBounds > 25) 
+        return 1000;
+    else 
+        return 100;
+};
+
 var getRequestOptions = (latLng, radius) => {
     let url = 'http://maps.google.com/cbk?output=json&hl=en&ll=' + latLng.lat + ',' + latLng.lng + '&radius=' + radius + '&cb_client=maps_sv&v=4';
     return {
@@ -145,7 +168,8 @@ async function getLocation(bounds, codes, chosenLatitudes) {
     let locationWithinCountry = false;
     while (Object.keys(json).length == 0 || !locationWithinCountry) {
         let latLng = getRandomLatLng(bounds);
-        let requestOptions = getRequestOptions(latLng, 10000);
+        let radius = getRadius(bounds);
+        let requestOptions = getRequestOptions(latLng, radius);
         json = await makeRequest(requestOptions);
         if (Object.keys(json).length != 0) {
             if (bounds.countryCode != 'custom') {
