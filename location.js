@@ -121,7 +121,9 @@ var getRadius = (bounds) => {
 
     let distanceAcrossBounds = calculateDistance(bounds.minLat, bounds.minLng, bounds.maxLat, bounds.maxLng);
 
-    if (distanceAcrossBounds > 1000) //km
+    if (distanceAcrossBounds > 5000) 
+        return 25000;
+    else if (distanceAcrossBounds > 1000) //km
         return 10000; //m
     else if (distanceAcrossBounds > 25) 
         return 1000;
