@@ -9,9 +9,10 @@ var express = require('express'),
     findInArray = require('./helper.js').findInArray,
     rooms = [],
     roomHosts = [],
-    boxes = {}, 
-    codes = {},
-    cities = {};
+    boxes, 
+    codes,
+    cities,
+    famousPlaces;
 
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/index.html');
@@ -35,6 +36,11 @@ server.listen(app.get('port'), () => {
      fs.readFile('./locations/cities.json', (err, data) => {
         if (err) throw err;
         cities = JSON.parse(data);
+    });
+
+    fs.readFile('./locations/famous.json', (err, data) => {
+        if (err) throw err;
+        famousPlaces = JSON.parse(data);
     });
 });
 
@@ -224,10 +230,11 @@ io.sockets.on('connection', (client) => {
         }
     });
 
-    client.on('loadCityLocations', (settings) => {
+    client.on('loadReadyLocations', (settings) => {
         let numOfLocations = settings.numberOfRounds;
         let isSingleplayer = settings.isSingleplayer;
         let clients = [client];
+        let locationType = settings.locationType;
         
         let gameSettings = {
             numberOfLocations: numOfLocations
@@ -243,7 +250,10 @@ io.sockets.on('connection', (client) => {
             }
         }
 
-        locationGenerator.getCityLocations(clients, cities, gameSettings);
+        if (locationType == 1) 
+            locationGenerator.getReadyLocations(clients, cities, gameSettings);
+        if (locationType == 2)
+            locationGenerator.getReadyLocations(clients, famousPlaces, gameSettings);
     });
 
     client.on('sendScore', (scoreInfo) => {

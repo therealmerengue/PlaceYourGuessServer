@@ -238,31 +238,31 @@ module.exports = {
         }
     }, 
     
-    getCityLocations: (clients, cities, gameSettings) => {
+    getReadyLocations: (clients, locations, gameSettings) => {
         let numberOfLocations = gameSettings.numberOfLocations;
-        let locations = [];
+        let locationsToReturn = [];
         let alreadySelectedCityIndexes = [];
 
         for (let i = 0; i < numberOfLocations; i++) {
-            let cityIndex = Math.floor(Math.random() * cities.length);
-            while (locations.indexOf(cityIndex) != -1) {
-                cityIndex = Math.floor(Math.random() * cities.length);
+            let locIndex = Math.floor(Math.random() * locations.length);
+            while (locationsToReturn.indexOf(locIndex) != -1) {
+                locIndex = Math.floor(Math.random() * locations.length);
             }
 
-            let city = cities[cityIndex];
-            alreadySelectedCityIndexes.push(cityIndex);
-            locations.push({
-                lat: city[0],
-                lng: city[1]
+            let loc = locations[locIndex];
+            alreadySelectedCityIndexes.push(locIndex);
+            locationsToReturn.push({
+                lat: loc[0],
+                lng: loc[1]
             });
         }
 
         if (clients.length == 1) {
-            clients[0].emit('startSingleplayerGame', locations);
+            clients[0].emit('startSingleplayerGame', locationsToReturn);
         } else {
             for (let i = 0; i < clients.length; i++) {
                 clients[i].emit('startMultiplayerGame', {
-                    locations: locations,
+                    locations: locationsToReturn,
                     timerLimit: gameSettings.timerLimit,
                     hintsEnabled: gameSettings.hintsEnabled
                 });
