@@ -183,14 +183,6 @@ io.sockets.on('connection', (client) => {
         printRooms();
     });
 
-    client.on('startGame', (gameSettings) => {
-        let hostIndex = findInArray(roomHosts, 'clientRef', client);
-        let room = rooms[hostIndex];
-        for (let i = 1; i < room.players.length; i++) {
-            room.players[i].clientRef.emit('clientStartGame', gameSettings);
-        }
-    });
-
     client.on('loadLocations', (settings) => { 
         let numOfLocations = settings.numberOfRounds;
         let randomCountry = settings.randomCountry;
@@ -212,7 +204,9 @@ io.sockets.on('connection', (client) => {
             let room = rooms[hostIndex];
             for (let i = 1; i < room.players.length; i++) { //push the rest of the players to clients array for emitting startMultiplayerGame event
                 clients.push(room.players[i].clientRef);
+                delete room.players[i].score; //delete previous scores
             }
+            delete room.players[0].score;
         }
 
         if (randomCountry) {
@@ -284,7 +278,6 @@ io.sockets.on('connection', (client) => {
             for (let i = 0; i < players.length; i++) {
                 players[i].clientRef.emit('showScores', playerScores); //send all individual scores to all players
                 console.log(players[i].nickname);
-                delete players[i].score; //delete score property from every player object
             }
             console.log('showScores emitted');
         }
