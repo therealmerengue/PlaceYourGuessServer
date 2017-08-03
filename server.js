@@ -14,10 +14,6 @@ var express = require('express'),
     cities,
     famousPlaces;
 
-app.get('/', function(req, res){
-    res.sendFile(__dirname + '/index.html');
-});
-
 app.set('port', (process.env.PORT || 5000));
 
 //LBN: '192.168.4.1', 8080
